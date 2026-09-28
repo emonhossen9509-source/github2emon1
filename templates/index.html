@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Text Summarizer</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        min-height: 100vh;
+        margin: 0;
+        padding: 40px 20px;
+        color: #222;
+    }
+    .container {
+        max-width: 720px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 32px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    header {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    header h1 {
+        margin: 0 0 6px 0;
+        font-size: 26px;
+        color: #1e3c72;
+    }
+    .student-info {
+        font-size: 14px;
+        color: #555;
+        background: #f0f4fa;
+        border-radius: 8px;
+        padding: 8px 14px;
+        display: inline-block;
+        margin-top: 8px;
+    }
+    textarea {
+        width: 100%;
+        min-height: 180px;
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        font-size: 15px;
+        resize: vertical;
+        font-family: inherit;
+    }
+    button {
+        margin-top: 14px;
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        background: #1e3c72;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    button:hover { background: #16305e; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .result-box {
+        margin-top: 24px;
+        padding: 18px;
+        border-radius: 10px;
+        background: #f7f9fc;
+        border-left: 4px solid #1e3c72;
+        display: none;
+        white-space: pre-wrap;
+        line-height: 1.5;
+    }
+    .error-box {
+        margin-top: 24px;
+        padding: 14px;
+        border-radius: 10px;
+        background: #fdecea;
+        border-left: 4px solid #d93025;
+        color: #a12a22;
+        display: none;
+    }
+    .loading {
+        text-align: center;
+        margin-top: 16px;
+        display: none;
+        color: #1e3c72;
+        font-weight: 600;
+    }
+    footer {
+        text-align: center;
+        margin-top: 28px;
+        font-size: 12px;
+        color: #999;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🧠 AI Text Summarizer</h1>
+        <div class="student-info">
+            {{ name }} &nbsp;|&nbsp; Student ID: {{ student_id }}
+        </div>
+    </header>
+
+    <p style="text-align:center; color:#555;">
+        Paste any long text below and get an instant AI-generated summary.
+    </p>
+
+    <textarea id="inputText" placeholder="Paste your text here (a paragraph, article, or essay)..."></textarea>
+    <button id="summarizeBtn" onclick="summarizeText()">Summarize</button>
+
+    <div class="loading" id="loading">⏳ Generating summary, please wait...</div>
+    <div class="result-box" id="resultBox"></div>
+    <div class="error-box" id="errorBox"></div>
+
+    <footer>Built with Flask + Hugging Face Inference API · Deployed on Render</footer>
+</div>
+
+<script>
+async function summarizeText() {
+    const text = document.getElementById('inputText').value.trim();
+    const btn = document.getElementById('summarizeBtn');
+    const loading = document.getElementById('loading');
+    const resultBox = document.getElementById('resultBox');
+    const errorBox = document.getElementById('errorBox');
+
+    resultBox.style.display = 'none';
+    errorBox.style.display = 'none';
+
+    if (!text) {
+        errorBox.textContent = 'Please enter some text first.';
+        errorBox.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    loading.style.display = 'block';
+
+    try {
+        const response = await fetch('/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            resultBox.textContent = data.summary;
+            resultBox.style.display = 'block';
+        } else {
+            errorBox.textContent = data.error || 'Something went wrong.';
+            errorBox.style.display = 'block';
+        }
+    } catch (err) {
+        errorBox.textContent = 'Network error: ' + err.message;
+        errorBox.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    }
+}
+</script>
+</body>
+</html>
